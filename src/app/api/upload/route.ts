@@ -1,19 +1,14 @@
 import { createClient } from "@/lib/supabase/server"
 import { getEmbeddings } from "@/lib/embeddings"
-import parsePDF from "pdf-parse"
+const pdfParse = require('pdf-parse')
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const data = await parsePDF(buffer, { max: 0 })
+    const data = await pdfParse(buffer)
     return data.text || ""
   } catch (error: any) {
-    console.error("PDF extraction error:", error)
-    try {
-      const data = await parsePDF(buffer, { max: 10 })
-      return data.text || ""
-    } catch {
-      return ""
-    }
+    console.error("PDF extraction error:", error?.message)
+    return ""
   }
 }
 
@@ -43,12 +38,7 @@ export async function POST(request: Request) {
     if (fileType === "txt") {
       textContent = buffer.toString("utf-8")
     } else if (fileType === "pdf") {
-      try {
-        textContent = await extractTextFromPDF(buffer)
-      } catch (pdfError) {
-        console.error("PDF parsing error:", pdfError)
-        textContent = ""
-      }
+      textContent = await extractTextFromPDF(buffer)
     } else {
       return Response.json(
         { error: "Unsupported file type. Use PDF, TXT" },

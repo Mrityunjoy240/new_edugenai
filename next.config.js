@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['@xenova/transformers'],
+    serverComponentsExternalPackages: ['@xenova/transformers', 'pdf-parse'],
   },
 }
 
