@@ -60,6 +60,7 @@ interface Note {
   title: string
   content: string
   created_at: string
+  file_name?: string
 }
 
 interface Progress {
@@ -194,12 +195,16 @@ export function CourseWorkspace({
             .order("chapter_number")
           setChapters(chaptersData || [])
 
-          const { data: sourcesData, error: sourcesError } = await supabase
+          const { data: sourcesData } = await supabase
             .from("sources")
             .select("*")
             .eq("user_id", user.id)
             .eq("course_id", courseId)
-          setNotes(sourcesData || [])
+          const uniqueSources = sourcesData
+            ? sourcesData.filter((s: any, i: number, arr: any[]) =>
+                arr.findIndex((x: any) => x.file_name === s.file_name) === i)
+            : []
+          setNotes(uniqueSources)
 
           const { data: progressData } = await supabase
             .from("chapter_progress")
@@ -255,12 +260,16 @@ export function CourseWorkspace({
           setShowUploadModal(false)
           setSelectedFile(null)
           setUploadTitle("")
-          const { data: newNotes } = await supabase
+          const { data: refreshed } = await supabase
             .from("sources")
             .select("*")
             .eq("user_id", userId)
             .eq("course_id", courseId)
-          setNotes(newNotes || [])
+          const unique = refreshed
+            ? refreshed.filter((s: any, i: number, arr: any[]) =>
+                arr.findIndex((x: any) => x.file_name === s.file_name) === i)
+            : []
+          setNotes(unique)
         } else {
           alert(data.error || "Upload failed")
         }
@@ -545,6 +554,12 @@ export function CourseWorkspace({
     }
   }
 
+  const getSpeechLang = (lang: string) => {
+    if (lang === "Bengali") return "bn-IN"
+    if (lang === "Hindi") return "hi-IN"
+    return "en-US"
+  }
+
   const handleMicClick = () => {
     const SpeechAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     
@@ -563,7 +578,7 @@ export function CourseWorkspace({
       speechRef.current = new SpeechAPI()
       speechRef.current.continuous = false
       speechRef.current.interimResults = true
-      speechRef.current.lang = "en-US"
+      speechRef.current.lang = getSpeechLang(selectedLanguage)
       
       speechRef.current.onresult = (event: any) => {
         const transcript = Array.from(event.results)
@@ -591,7 +606,7 @@ export function CourseWorkspace({
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     console.log("HANDLE SEND CALLED - input:", chatInput)
-    if (!chatInput.trim() || chatLoading || !userId || !course) return
+    if (!chatInput.trim() || chatLoading || !userId) return
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -736,8 +751,7 @@ export function CourseWorkspace({
               </div>
             ) : notes.length > 0 ? (
               <div className="space-y-1.5">
-                {notes.filter(n => 
-                  n.title.toLowerCase().includes(sourceSearch.toLowerCase())
+                {notes.filter(n => n.file_name && n.file_name.toLowerCase().includes(sourceSearch.toLowerCase())
                 ).map((note: any) => (
                   <button 
                     key={note.id} 

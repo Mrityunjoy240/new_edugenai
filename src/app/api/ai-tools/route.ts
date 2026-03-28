@@ -45,23 +45,7 @@ export async function POST(request: Request) {
         systemPrompt = `You are an expert at creating flashcards. Generate 10 question-answer pairs from the content. Format as JSON array with "question" and "answer" fields.`
         break
       case "notes":
-        systemPrompt = `Generate study notes in plain text only. Use exactly this structure with a blank line between each section:
-
-Topic: [topic name]
-
-Definition:
-[2 to 3 sentence definition]
-
-Key Points:
-1. [full sentence]
-2. [full sentence]
-3. [full sentence]
-4. [full sentence]
-
-Summary:
-[2 to 3 sentence summary]
-
-Never use asterisks, hashtags, bullet symbols, or bold markdown. Maximum 250 words.`
+        systemPrompt = "Generate study notes in plain text only. Use exactly this format with a blank line between every section. Never use asterisks, hashtags, bullet symbols, or bold markdown. Maximum 250 words.\n\nTopic: [topic name here]\n\nDefinition:\n[Write 2 to 3 clear sentences defining the topic]\n\nKey Points:\n1. [First key point as a complete sentence]\n2. [Second key point as a complete sentence]\n3. [Third key point as a complete sentence]\n4. [Fourth key point as a complete sentence]\n\nSummary:\n[Write 2 to 3 sentences summarizing the most important takeaway]"
         break
       case "assignment":
         systemPrompt = `You are an expert assignment generator. Generate 3-5 descriptive assignment questions from the content. Include a mix of short answer and long answer questions.`
