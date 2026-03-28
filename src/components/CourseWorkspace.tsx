@@ -170,6 +170,20 @@ export function CourseWorkspace({
   useEffect(() => {
     async function fetchData() {
       if (type === "notebook") {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          setUserId(user.id)
+          const { data: sourcesData } = await supabase
+            .from("sources")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("course_id", courseId)
+          const uniqueSources = sourcesData
+            ? sourcesData.filter((s: any, i: number, arr: any[]) =>
+                arr.findIndex((x: any) => x.file_name === s.file_name) === i)
+            : []
+          setNotes(uniqueSources)
+        }
         setLoading(false)
         return
       }
