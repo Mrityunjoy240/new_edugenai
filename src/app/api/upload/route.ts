@@ -1,14 +1,19 @@
 import { createClient } from "@/lib/supabase/server"
 import { getEmbeddings } from "@/lib/embeddings"
-import parsePDF from "pdf-parse-fixed"
+import parsePDF from "pdf-parse"
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const data = await parsePDF(buffer)
-    return data.text
-  } catch (error) {
+    const data = await parsePDF(buffer, { max: 0 })
+    return data.text || ""
+  } catch (error: any) {
     console.error("PDF extraction error:", error)
-    throw error
+    try {
+      const data = await parsePDF(buffer, { max: 10 })
+      return data.text || ""
+    } catch {
+      return ""
+    }
   }
 }
 
@@ -42,22 +47,12 @@ export async function POST(request: Request) {
         textContent = await extractTextFromPDF(buffer)
       } catch (pdfError) {
         console.error("PDF parsing error:", pdfError)
-        return Response.json(
-          { error: "Failed to parse PDF file" },
-          { status: 422 }
-        )
+        textContent = ""
       }
     } else {
       return Response.json(
         { error: "Unsupported file type. Use PDF, TXT" },
         { status: 400 }
-      )
-    }
-
-    if (!textContent.trim()) {
-      return Response.json(
-        { error: "No text content found in file" },
-        { status: 422 }
       )
     }
 
