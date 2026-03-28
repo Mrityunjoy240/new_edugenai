@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 
     const notesToInsert = chunks.map((chunk, index) => ({
       user_id: userId,
-      course_id: courseId || null,
+      course_id: courseId && courseId.includes('-') ? courseId : null,
       title: `${title} (Part ${index + 1})`,
       content: chunk,
       subject: null,

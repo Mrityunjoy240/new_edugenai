@@ -57,9 +57,11 @@ export async function POST(request: Request) {
         return Response.json({ error: "Invalid tool type" }, { status: 400 })
     }
 
+    const cleanContent = content.replace(/\*\*/g, '').replace(/\*/g, '').replace(/#{1,6}/g, '').replace(/•/g, '').trim()
+
     const messages: ChatMessage[] = [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `Content:\n${content}` }
+      { role: "user", content: `Content:\n${cleanContent}` }
     ]
 
     const result = await chatCompletion(messages)
