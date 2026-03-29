@@ -1,4 +1,9 @@
-export async function chatCompletion(messages: any[], model?: string, maxTokens?: number): Promise<string> {
+export interface ChatMessage {
+  role: "system" | "user" | "assistant"
+  content: string
+}
+
+export async function chatCompletion(messages: ChatMessage[], model?: string, maxTokens?: number): Promise<string> {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const controller = new AbortController()
