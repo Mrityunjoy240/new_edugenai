@@ -35,7 +35,7 @@ import {
   Loader2,
   ChevronLeft,
   CheckCircle2,
-  File,
+  File as FileIcon,
   X,
   Sparkles,
   TrendingUp,
@@ -428,13 +428,24 @@ export function CourseWorkspace({
             setMessages(prev => [...prev, assistantMessage])
           } else if (toolType === "quiz") {
             try {
-              const cleaned = rawResult.replace(/```json/g, '').replace(/```/g, '').trim()
+              const cleaned = rawResult
+                .replace(/```json/g, '')
+                .replace(/```/g, '')
+                .trim()
               const parsed = JSON.parse(cleaned)
-              setQuizQuestions(Array.isArray(parsed) ? parsed : [])
+              const questions = Array.isArray(parsed) ? parsed : parsed.questions || parsed.quiz || []
+              const normalized = questions.map((q: any) => ({
+                question: q.question || q.text || q.q || '',
+                options: Array.isArray(q.options) ? q.options :
+                         Array.isArray(q.choices) ? q.choices :
+                         Object.values(q.options || q.choices || {}),
+                correct: q.correct || q.answer || q.correct_answer || 'A'
+              }))
+              setQuizQuestions(normalized)
               setSmartToolResult("Quiz loaded - click an answer")
-            } catch {
-              setQuizQuestions([])
+            } catch (e) {
               console.error("Quiz parse error:", rawResult)
+              setQuizQuestions([])
             }
           } else if (toolType === "flashcards") {
             try {
@@ -1060,7 +1071,7 @@ export function CourseWorkspace({
                   <div key={idx} className="p-3 rounded-lg border bg-background">
                     <p className="text-xs font-medium mb-2">Q{idx + 1}. {q.question}</p>
                     <div className="space-y-1">
-                      {(q.options || q.choices || []).map((opt: string, optIdx: number) => (
+                      {(Array.isArray(q.options) ? q.options : Array.isArray(q.choices) ? q.choices : Array.isArray(q.answers) ? q.answers : Object.values(q.options || q.choices || {})).map((opt: any, optIdx: number) => (
                         <button
                           key={optIdx}
                           onClick={() => handleQuizAnswer(idx, opt)}
