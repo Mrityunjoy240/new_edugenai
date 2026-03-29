@@ -96,10 +96,33 @@ export async function POST(request: Request) {
 
     const sourceId = sourceRecord?.id || null
 
+    if (textContent.length > 50000) {
+      textContent = textContent.substring(0, 50000)
+      console.log("[Upload] Text trimmed to 50000 chars to prevent memory overflow")
+    }
+
     const chunks = splitIntoChunks(textContent, 1000)
-    const embeddings = await Promise.all(
-      chunks.map(chunk => getEmbeddings(chunk).catch(() => null))
-    )
+    let embeddings: any[] = []
+    try {
+      embeddings = await Promise.all(
+        chunks.map(chunk => getEmbeddings(chunk).catch((err) => {
+          const msg = err.message?.toLowerCase() || ""
+          if (msg.includes("memory") || msg.includes("allocate") || msg.includes("onnx")) {
+            throw err 
+          }
+          return null
+        }))
+      )
+    } catch (err: any) {
+      const msg = err.message?.toLowerCase() || ""
+      if (msg.includes("memory") || msg.includes("allocate") || msg.includes("onnx")) {
+        console.error("[Upload API] Embedding failed due to memory/ONNX error:", err.message)
+        embeddings = []
+      } else {
+        throw err
+      }
+    }
+    
     console.log(`[Upload API] Generated ${embeddings.filter(e => e !== null).length} valid embeddings for ${chunks.length} chunks.`)
 
     const notesToInsert = chunks.map((chunk, index) => ({
