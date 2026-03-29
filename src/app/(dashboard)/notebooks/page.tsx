@@ -10,6 +10,7 @@ interface Notebook {
   id: string
   title: string
   created_at: string
+  created_by: string | null
 }
 
 export default function NotebooksPage() {
@@ -29,8 +30,8 @@ export default function NotebooksPage() {
 
       const { data } = await supabase
         .from("courses")
-        .select("id, title, created_at")
-        .eq("created_by", user.id)
+        .select("id, title, created_at, created_by")
+        .or(`created_by.eq.${user.id},is_published.eq.true`)
         .eq("category", "notebook")
         .order("created_at", { ascending: false })
       

@@ -15,6 +15,7 @@ interface Course {
   level: string
   total_chapters: number
   category?: string
+  created_by?: string | null
 }
 
 interface Progress {
@@ -207,6 +208,13 @@ export function DashboardContent({ user, profile, courses, progress }: Dashboard
                 {/* Subtle pattern overlay */}
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "16px 16px" }}></div>
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
+                
+                {!course.created_by && (
+                  <span className="absolute top-2 right-2 bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full font-medium z-20">
+                    Sample
+                  </span>
+                )}
+                
                 <span className="text-6xl group-hover:scale-110 transition-transform duration-300 drop-shadow-md pb-4">{emoji}</span>
                 <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent pt-8">
                   <h3 className="text-md font-semibold tracking-tight text-white drop-shadow-sm truncate">{course.title}</h3>
