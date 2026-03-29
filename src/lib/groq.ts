@@ -1,37 +1,42 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-
 export async function chatCompletion(messages: any[], model?: string, maxTokens?: number): Promise<string> {
-  try {
-    const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "HTTP-Referer": "https://edugen-ai.vercel.app",
+          "X-Title": "EduGen AI"
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-4-maverick:free",
+          max_tokens: maxTokens || 1000,
+          messages,
+        }),
+      })
 
-    const systemMessage = messages.find(m => m.role === "system")?.content || ""
-    const conversationMessages = messages.filter(m => m.role !== "system")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        const errorMsg = JSON.stringify(errorData)
+        if (errorMsg.includes("rate") && attempt < 3) {
+          console.log(`[OpenRouter] Rate limit, waiting 5s... attempt ${attempt}/3`)
+          await new Promise(r => setTimeout(r, 5000))
+          continue
+        }
+        throw new Error(`OpenRouter error: ${errorMsg}`)
+      }
 
-    const history = conversationMessages.slice(0, -1).map(m => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }]
-    }))
+      const data = await response.json()
+      return data.choices?.[0]?.message?.content || ""
 
-    const lastMessage = conversationMessages[conversationMessages.length - 1]?.content || ""
-
-    const chat = geminiModel.startChat({
-      history,
-      systemInstruction: systemMessage ? {
-        role: "system",
-        parts: [{ text: systemMessage }]
-      } : undefined,
-    })
-
-    const result = await chat.sendMessage(lastMessage)
-    return result.response.text() || ""
-
-  } catch (error: any) {
-    console.error("[Gemini] Error:", error?.message)
-    if (error?.message?.includes("quota") || error?.message?.includes("rate")) {
-      await new Promise(r => setTimeout(r, 5000))
+    } catch (error: any) {
+      console.error(`[OpenRouter] Error attempt ${attempt}:`, error?.message)
+      if (attempt === 3) {
+        return "I am having trouble connecting right now. Please try again in a moment."
+      }
+      await new Promise(r => setTimeout(r, 3000))
     }
-    return "I am having trouble connecting right now. Please try again in a moment."
   }
+  return "I am having trouble connecting right now. Please try again in a moment."
 }
