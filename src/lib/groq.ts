@@ -10,7 +10,7 @@ export async function chatCompletion(messages: any[], model?: string, maxTokens?
           "X-Title": "EduGen AI"
         },
         body: JSON.stringify({
-          model: "meta-llama/llama-4-maverick:free",
+          model: "openrouter/auto",
           max_tokens: maxTokens || 1000,
           messages,
         }),
