@@ -56,12 +56,15 @@ export async function POST(request: Request) {
 
     const filePath = uploadData?.path || null
 
+    const isValidUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+    const validCourseId = courseId && isValidUUID(courseId) ? courseId : null
+
     // 1. Create source record
     const { data: sourceRecord, error: sourceError } = await supabase
       .from("sources")
       .insert({
         user_id: userId,
-        course_id: courseId && courseId.includes('-') ? courseId : null,
+        course_id: validCourseId,
         file_name: file.name,
         file_path: filePath,
         file_type: fileType,
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
 
     const notesToInsert = chunks.map((chunk, index) => ({
       user_id: userId,
-      course_id: courseId && courseId.includes('-') ? courseId : null,
+      course_id: validCourseId,
       source_id: sourceId,
       chunk_index: index,
       title: `${title} (Part ${index + 1})`,
