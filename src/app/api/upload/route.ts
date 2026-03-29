@@ -14,7 +14,9 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
             const texts = page?.Texts || []
             return texts.map((t: any) => {
               const runs = t?.R || []
-              return runs.map((r: any) => decodeURIComponent(r?.T || '')).join('')
+              return runs.map((r: any) => {
+                try { return decodeURIComponent(r?.T || '') } catch { return r?.T || '' }
+              }).join('')
             }).join(' ')
           }).join('\n')
           
