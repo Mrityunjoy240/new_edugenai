@@ -4,7 +4,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 export async function chatCompletion(messages: any[], model?: string, maxTokens?: number): Promise<string> {
   try {
-    const geminiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+    const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
     const systemMessage = messages.find(m => m.role === "system")?.content || ""
     const conversationMessages = messages.filter(m => m.role !== "system")
