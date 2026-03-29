@@ -131,7 +131,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Email | Password |
 |-------|----------|
-| student@test.com | test123456 |
+| student@test.com | 123 |
 
 ### Test Flow
 
