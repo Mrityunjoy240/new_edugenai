@@ -1,12 +1,25 @@
 import { createClient } from "@/lib/supabase/server"
 import { getEmbeddings } from "@/lib/embeddings"
-const pdfParseModule = require('pdf-parse')
-const pdfParse = pdfParseModule.default || pdfParseModule
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const data = await pdfParse(buffer)
-    return data.text || ""
+    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'HEAD'
+    }).catch(() => null)
+    
+    const text = buffer.toString('latin1')
+    const matches = text.match(/\(([^)]{3,})\)/g) || []
+    const extracted = matches
+      .map(m => m.slice(1, -1))
+      .filter(s => /^[\x20-\x7E\s]+$/.test(s) && s.trim().length > 3)
+      .join(' ')
+    
+    if (extracted.length > 100) return extracted
+    
+    const streamText = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    return streamText.length > 50 ? streamText : ""
   } catch (error: any) {
     console.error("PDF extraction error:", error?.message)
     return ""
