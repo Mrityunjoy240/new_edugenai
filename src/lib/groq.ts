@@ -18,7 +18,10 @@ export async function chatCompletion(messages: any[], model?: string, maxTokens?
 
     const chat = geminiModel.startChat({
       history,
-      systemInstruction: systemMessage,
+      systemInstruction: systemMessage ? {
+        role: "system",
+        parts: [{ text: systemMessage }]
+      } : undefined,
     })
 
     const result = await chat.sendMessage(lastMessage)
