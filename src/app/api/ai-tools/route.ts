@@ -34,7 +34,24 @@ export async function POST(request: Request) {
       })
     }
 
-    const content = userNotes.map(n => n.content).join("\n\n").substring(0, 8000) || "No content available"
+    const content = userNotes
+      .map(n => n.content || "")
+      .join("\n\n")
+      .replace(/[^\x20-\x7E\n\r\t]/g, ' ')  // strip non-ASCII
+      .replace(/\s{3,}/g, '\n')              // collapse whitespace
+      .replace(/(.)\1{5,}/g, '$1')           // remove aaaaa... repetitions
+      .split('\n')
+      .filter(line => {
+        const trimmed = line.trim()
+        if (trimmed.length < 10) return false  // skip very short lines
+        const nonAsciiRatio = (trimmed.match(/[^\x20-\x7E]/g) || []).length / trimmed.length
+        return nonAsciiRatio < 0.3  // skip lines that are mostly garbage
+      })
+      .join('\n')
+      .substring(0, 6000)
+
+    console.log(`[AI-Tools] Clean content length: ${content.length} chars`)
+    console.log(`[AI-Tools] Content preview: ${content.substring(0, 200)}`)
 
     let systemPrompt = ""
 
