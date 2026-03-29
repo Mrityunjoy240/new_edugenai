@@ -2,44 +2,41 @@ import { createClient } from "@/lib/supabase/server"
 import { getEmbeddings } from "@/lib/embeddings"
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  try {
-    const str = buffer.toString('binary')
-    const textBlocks: string[] = []
-    
-    // Extract text from BT...ET blocks (actual PDF text blocks)
-    const btEtRegex = /BT([\s\S]*?)ET/g
-    let match
-    while ((match = btEtRegex.exec(str)) !== null) {
-      const block = match[1]
-      // Extract strings in parentheses (PDF text operators)
-      const strRegex = /\(([^)\\]|\\.)*\)/g
-      let strMatch
-      while ((strMatch = strRegex.exec(block)) !== null) {
-        const text = strMatch[0]
-          .slice(1, -1)
-          .replace(/\\n/g, '\n')
-          .replace(/\\r/g, '\r')
-          .replace(/\\t/g, '\t')
-          .replace(/\\\(/g, '(')
-          .replace(/\\\)/g, ')')
-          .replace(/\\\\/g, '\\')
-          .replace(/\\[0-7]{3}/g, ' ')
-        if (text.trim().length > 2 && /[a-zA-Z]/.test(text)) {
-          textBlocks.push(text)
+  return new Promise((resolve) => {
+    try {
+      const PDFParser = require('pdf2json')
+      const pdfParser = new PDFParser()
+      
+      pdfParser.on('pdfParser_dataReady', (pdfData: any) => {
+        try {
+          const pages = pdfData?.Pages || []
+          const text = pages.map((page: any) => {
+            const texts = page?.Texts || []
+            return texts.map((t: any) => {
+              const runs = t?.R || []
+              return runs.map((r: any) => decodeURIComponent(r?.T || '')).join('')
+            }).join(' ')
+          }).join('\n')
+          
+          console.log(`[PDF] Extracted ${text.length} chars, preview: ${text.substring(0, 150)}`)
+          resolve(text.trim())
+        } catch (e) {
+          console.error('[PDF] Parse error:', e)
+          resolve('')
         }
-      }
+      })
+      
+      pdfParser.on('pdfParser_dataError', (err: any) => {
+        console.error('[PDF] Error:', err)
+        resolve('')
+      })
+      
+      pdfParser.parseBuffer(buffer)
+    } catch (e) {
+      console.error('[PDF] Init error:', e)
+      resolve('')
     }
-    
-    const result = textBlocks.join(' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-    
-    console.log(`[PDF] Extracted ${result.length} chars, preview: ${result.substring(0, 100)}`)
-    return result.length > 100 ? result : ""
-  } catch (error: any) {
-    console.error("PDF extraction error:", error?.message)
-    return ""
-  }
+  })
 }
 
 export async function POST(request: Request) {
@@ -142,18 +139,21 @@ export async function POST(request: Request) {
     
     console.log(`[Upload API] Generated ${embeddings.filter(e => e !== null).length} valid embeddings for ${chunks.length} chunks.`)
 
-    const notesToInsert = chunks.map((chunk, index) => ({
-      user_id: userId,
-      course_id: validCourseId,
-      source_id: sourceId,
-      chunk_index: index,
-      title: `${title} (Part ${index + 1})`,
-      content: chunk,
-      subject: null,
-      topic: null,
-      embedding: embeddings[index],
-      file_path: filePath,
-    }))
+    const notesToInsert = chunks.map((chunk, index) => {
+      const sanitizedContent = chunk.replace(/\u0000/g, '').replace(/\x00/g, '')
+      return {
+        user_id: userId,
+        course_id: validCourseId,
+        source_id: sourceId,
+        chunk_index: index,
+        title: `${title} (Part ${index + 1})`,
+        content: sanitizedContent,
+        subject: null,
+        topic: null,
+        embedding: embeddings[index],
+        file_path: filePath,
+      }
+    })
 
     if (notesToInsert.length > 0) {
       const { error: insertError } = await supabase
