@@ -3,7 +3,6 @@
 import { Play, ArrowRight, BookOpen, Clock, Award, TrendingUp, Sparkles, Plus } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useState } from "react"
 
 interface Course {
   id: string
@@ -180,12 +180,15 @@ export function DashboardContent({ user, profile, courses, progress }: Dashboard
         </div>
         
         <div className="flex gap-4 overflow-x-auto pb-6 pt-2 px-1 custom-scrollbar">
+          {/* Create New Notebook Card */}
           <Dialog>
             <DialogTrigger asChild>
-              <button className="min-w-[240px] h-[160px] border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors shadow-sm hover:shadow-md">
-                <Plus className="h-12 w-12 text-primary mb-2" />
-                <p className="text-sm font-medium">Create new notebook</p>
-              </button>
+              <div 
+                className="min-w-[240px] h-[160px] border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.03] shadow-sm hover:shadow-md duration-300"
+              >
+                <div className="text-3xl text-muted-foreground mb-2 opacity-60">+</div>
+                <p className="text-sm font-semibold text-muted-foreground">Create new notebook</p>
+              </div>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>

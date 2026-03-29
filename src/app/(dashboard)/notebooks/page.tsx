@@ -93,7 +93,6 @@ export default function NotebooksPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
@@ -140,7 +139,6 @@ export default function NotebooksPage() {
         </Dialog>
       </div>
 
-      {/* Notebooks Grid */}
       {loading ? (
         <div className="flex justify-center py-12">
           <p className="text-muted-foreground">Loading notebooks...</p>
