@@ -3,23 +3,22 @@ import { getEmbeddings } from "@/lib/embeddings"
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-      method: 'HEAD'
-    }).catch(() => null)
-    
-    const text = buffer.toString('latin1')
-    const matches = text.match(/\(([^)]{3,})\)/g) || []
-    const extracted = matches
-      .map(m => m.slice(1, -1))
-      .filter(s => /^[\x20-\x7E\s]+$/.test(s) && s.trim().length > 3)
-      .join(' ')
-    
-    if (extracted.length > 100) return extracted
-    
-    const streamText = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-    return streamText.length > 50 ? streamText : ""
+    const uint8Array = new Uint8Array(buffer)
+    const text = Buffer.from(uint8Array).toString('binary')
+    const chunks: string[] = []
+    const streamRegex = /stream([\s\S]*?)endstream/g
+    let match
+    while ((match = streamRegex.exec(text)) !== null) {
+      const streamContent = match[1]
+      const readable = streamContent
+        .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+      if (readable.length > 20) chunks.push(readable)
+    }
+    const result = chunks.join(' ').trim()
+    console.log(`[PDF] Extracted ${result.length} characters`)
+    return result
   } catch (error: any) {
     console.error("PDF extraction error:", error?.message)
     return ""
