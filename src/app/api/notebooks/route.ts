@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/service"
 import { getEmbeddings } from "@/lib/embeddings"
 import parsePDF from "pdf-parse-fixed"
 
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Notebook name required" }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabase = await createServiceClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     // Create the notebook (course) first
     const { data: notebook, error: notebookError } = await supabase
       .from("courses")
-      .insert({ title: notebookName, description: "Personal notebook", subject: "General", created_by: userId })
+      .insert({ title: notebookName, description: "Personal notebook", subject: "General", created_by: userId, level: "college" })
       .select()
       .single()
 

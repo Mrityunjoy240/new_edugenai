@@ -171,13 +171,17 @@ export function CourseWorkspace({
     async function fetchData() {
       if (type === "notebook") {
         const { data: { user } } = await supabase.auth.getUser()
+        console.log("NOTEBOOK USER:", user?.id)
+        console.log("NOTEBOOK COURSE ID:", courseId)
         if (user) {
           setUserId(user.id)
-          const { data: sourcesData } = await supabase
+          const { data: sourcesData, error: sourcesError } = await supabase
             .from("sources")
             .select("*")
             .eq("user_id", user.id)
             .eq("course_id", courseId)
+          console.log("NOTEBOOK SOURCES DATA:", sourcesData)
+          console.log("NOTEBOOK SOURCES ERROR:", sourcesError)
           const uniqueSources = sourcesData
             ? sourcesData.filter((s: any, i: number, arr: any[]) =>
                 arr.findIndex((x: any) => x.file_name === s.file_name) === i)
