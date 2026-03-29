@@ -44,11 +44,15 @@ export async function POST(request: Request) {
       if (matchedNcert) ncertContent = matchedNcert
     }
 
+    const filteredNotes = contextNotes.filter((note: any) => 
+      !courseId || note.course_id === courseId
+    )
+
     // Build context string
     let context = ""
-    if (contextNotes.length > 0) {
+    if (filteredNotes.length > 0) {
       context += "Relevant sections from Student's Notes:\n"
-      contextNotes.forEach((note: any) => {
+      filteredNotes.forEach((note: any) => {
         context += `[Note: ${note.title}]\n${note.content}\n\n`
       })
     }

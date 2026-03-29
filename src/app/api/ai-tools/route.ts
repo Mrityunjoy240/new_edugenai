@@ -26,7 +26,10 @@ export async function POST(request: Request) {
     }
 
     if (userNotes.length === 0) {
-      console.log(`[AI-Tools] No notes found for courseId ${courseId}, falling back to general knowledge.`)
+      return Response.json({ 
+        success: false, 
+        error: "No content found. Please upload a PDF to this notebook first." 
+      }, { status: 404 })
     }
 
     const content = userNotes.map(n => n.content).join("\n\n") || "No content available"

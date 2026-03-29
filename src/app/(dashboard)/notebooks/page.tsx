@@ -19,6 +19,8 @@ export default function NotebooksPage() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [notebookName, setNotebookName] = useState("")
 
   useEffect(() => {
     async function loadNotebooks() {
@@ -40,11 +42,14 @@ export default function NotebooksPage() {
     loadNotebooks()
   }, [supabase])
 
-  const handleCreateNew = async () => {
+  const handleCreateNew = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!notebookName.trim()) return
+    
     setCreating(true)
     try {
       const formData = new FormData()
-      formData.append("name", "Untitled Notebook")
+      formData.append("name", notebookName)
       const res = await fetch("/api/notebooks", {
         method: "POST",
         body: formData
@@ -57,6 +62,7 @@ export default function NotebooksPage() {
       console.error(err)
     } finally {
       setCreating(false)
+      setShowModal(false)
     }
   }
 
@@ -77,7 +83,7 @@ export default function NotebooksPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
           {/* Create New Notebook Card */}
           <div 
-            onClick={!creating ? handleCreateNew : undefined}
+            onClick={!creating ? () => setShowModal(true) : undefined}
             className={cn(
               "h-[180px] border-2 border-dashed border-border rounded-xl overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300 relative",
               creating ? "opacity-50 cursor-default" : "cursor-pointer hover:scale-[1.03] hover:bg-muted/50"
@@ -118,6 +124,32 @@ export default function NotebooksPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card w-full max-w-sm rounded-xl shadow-lg border border-border p-6 relative">
+             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+               <span className="sr-only">Close</span>
+               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+             </button>
+             <h2 className="text-xl font-bold mb-4 text-foreground">Create Notebook</h2>
+             <form onSubmit={handleCreateNew}>
+                <input
+                  type="text"
+                  placeholder="Notebook Name"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mb-4"
+                  value={notebookName}
+                  onChange={(e) => setNotebookName(e.target.value)}
+                  autoFocus
+                />
+                <button type="submit" disabled={creating || !notebookName.trim()} className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full">
+                  {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {creating ? "Creating..." : "Create Notebook"}
+                </button>
+             </form>
+          </div>
         </div>
       )}
     </div>

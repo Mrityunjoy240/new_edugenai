@@ -180,22 +180,36 @@ export function DashboardContent({ user, profile, courses, progress }: Dashboard
 
           {/* Suggested Notebooks */}
           {courses.map((course) => {
-            const colors = ["#ef4444", "#f97316", "#f59e0b", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#ec4899"];
-            const charCode = course.title && course.title.length > 0 ? course.title.charCodeAt(0) : 0;
-            const bgColor = colors[charCode % colors.length];
             const firstLetter = course.title && course.title.length > 0 ? course.title.charAt(0).toUpperCase() : "U";
+            
+            // Emoji map
+            const emojiMap: Record<string, string> = {
+              A: '📐', B: '📚', C: '💻', D: '🌳', E: '⚡', F: '🔬', G: '🌍', H: '🏛', I: '💡', J: '🎯', 
+              K: '🔑', L: '🧬', M: '🔢', N: '🧠', O: '🧿', P: '🐍', Q: '❓', R: '🤖', S: '⭐', T: '📊', 
+              U: '📓', V: '🎨', W: '🌐', X: '🔭', Y: '🧪', Z: '⚙'
+            };
+            const emoji = emojiMap[firstLetter] || '📝';
+
+            // Gradient map
+            let gradientClass = "from-slate-500 to-gray-600";
+            if (firstLetter >= 'A' && firstLetter <= 'E') gradientClass = "from-blue-500 to-purple-600";
+            else if (firstLetter >= 'F' && firstLetter <= 'J') gradientClass = "from-green-500 to-teal-600";
+            else if (firstLetter >= 'K' && firstLetter <= 'O') gradientClass = "from-orange-500 to-red-600";
+            else if (firstLetter >= 'P' && firstLetter <= 'T') gradientClass = "from-purple-500 to-pink-600";
+            else if (firstLetter >= 'U' && firstLetter <= 'Z') gradientClass = "from-teal-500 to-cyan-600";
 
             return (
               <div 
                 key={course.id} 
                 onClick={() => router.push(course.category === 'notebook' ? `/notebooks/${course.id}` : `/course-workspace/${course.id}`)} 
-                className="relative min-w-[240px] h-[160px] rounded-xl overflow-hidden group cursor-pointer hover:scale-[1.03] transition-all duration-300 shadow-sm hover:shadow-md shrink-0 border border-border flex items-center justify-center"
-                style={{ backgroundColor: bgColor }}
+                className={`relative min-w-[240px] h-[160px] rounded-xl overflow-hidden group cursor-pointer hover:scale-[1.03] transition-all duration-300 shadow-sm hover:shadow-md shrink-0 border border-border flex items-center justify-center bg-gradient-to-br ${gradientClass}`}
               >
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
-                <span className="text-6xl font-bold text-white/40 group-hover:text-white/60 transition-colors drop-shadow-md pb-4">{firstLetter}</span>
-                <div className="absolute bottom-3 left-3 text-white z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                  <h3 className="text-md font-semibold tracking-tight">{course.title}</h3>
+                {/* Subtle pattern overlay */}
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "16px 16px" }}></div>
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
+                <span className="text-6xl group-hover:scale-110 transition-transform duration-300 drop-shadow-md pb-4">{emoji}</span>
+                <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent pt-8">
+                  <h3 className="text-md font-semibold tracking-tight text-white drop-shadow-sm truncate">{course.title}</h3>
                 </div>
               </div>
             )
