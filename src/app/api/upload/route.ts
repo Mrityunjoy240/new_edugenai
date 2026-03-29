@@ -3,22 +3,39 @@ import { getEmbeddings } from "@/lib/embeddings"
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const uint8Array = new Uint8Array(buffer)
-    const text = Buffer.from(uint8Array).toString('binary')
-    const chunks: string[] = []
-    const streamRegex = /stream([\s\S]*?)endstream/g
+    const str = buffer.toString('binary')
+    const textBlocks: string[] = []
+    
+    // Extract text from BT...ET blocks (actual PDF text blocks)
+    const btEtRegex = /BT([\s\S]*?)ET/g
     let match
-    while ((match = streamRegex.exec(text)) !== null) {
-      const streamContent = match[1]
-      const readable = streamContent
-        .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-      if (readable.length > 20) chunks.push(readable)
+    while ((match = btEtRegex.exec(str)) !== null) {
+      const block = match[1]
+      // Extract strings in parentheses (PDF text operators)
+      const strRegex = /\(([^)\\]|\\.)*\)/g
+      let strMatch
+      while ((strMatch = strRegex.exec(block)) !== null) {
+        const text = strMatch[0]
+          .slice(1, -1)
+          .replace(/\\n/g, '\n')
+          .replace(/\\r/g, '\r')
+          .replace(/\\t/g, '\t')
+          .replace(/\\\(/g, '(')
+          .replace(/\\\)/g, ')')
+          .replace(/\\\\/g, '\\')
+          .replace(/\\[0-7]{3}/g, ' ')
+        if (text.trim().length > 2 && /[a-zA-Z]/.test(text)) {
+          textBlocks.push(text)
+        }
+      }
     }
-    const result = chunks.join(' ').trim()
-    console.log(`[PDF] Extracted ${result.length} characters`)
-    return result
+    
+    const result = textBlocks.join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    
+    console.log(`[PDF] Extracted ${result.length} chars, preview: ${result.substring(0, 100)}`)
+    return result.length > 100 ? result : ""
   } catch (error: any) {
     console.error("PDF extraction error:", error?.message)
     return ""
