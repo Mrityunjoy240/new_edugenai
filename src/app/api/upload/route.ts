@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { getEmbeddings } from "@/lib/embeddings"
-const pdfParse = require('pdf-parse')
+const pdfParseModule = require('pdf-parse')
+const pdfParse = pdfParseModule.default || pdfParseModule
 
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File | null
     const userId = formData.get("userId") as string
     const courseId = formData.get("courseId") as string | null
+    console.log("UPLOAD API - received courseId:", courseId)
     const title = formData.get("title") as string || file?.name || "Untitled"
 
     if (!file || !userId) {
@@ -58,6 +60,7 @@ export async function POST(request: Request) {
 
     const isValidUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
     const validCourseId = courseId && isValidUUID(courseId) ? courseId : null
+    console.log("UPLOAD API - validCourseId:", validCourseId)
 
     // 1. Create source record
     const { data: sourceRecord, error: sourceError } = await supabase

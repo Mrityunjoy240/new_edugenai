@@ -264,6 +264,7 @@ export function CourseWorkspace({
         const formData = new FormData()
         formData.append("file", selectedFile)
         formData.append("userId", userId)
+        console.log("UPLOAD - courseId being sent:", courseId)
         formData.append("courseId", courseId)
         if (uploadTitle) formData.append("title", uploadTitle)
         
