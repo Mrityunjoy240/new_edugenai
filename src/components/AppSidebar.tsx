@@ -12,7 +12,7 @@ import {
   Bot,
   Users,
   Settings,
-  StickyNote,
+
   BarChart3,
   Brain,
   GraduationCap as TeacherIcon,
@@ -33,7 +33,7 @@ const navItems = [
   { href: "/career", label: "Career", icon: Map },
   { href: "/ai-mentor", label: "AI Mentor", icon: Bot },
   { href: "/quiz", label: "Quiz", icon: Brain },
-  { href: "/flashcards", label: "Flashcards", icon: StickyNote },
+
   { href: "/teacher", label: "Teacher Support", icon: TeacherIcon },
   { href: "/community", label: "Community", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
