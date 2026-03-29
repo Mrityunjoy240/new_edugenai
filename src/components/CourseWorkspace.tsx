@@ -184,7 +184,7 @@ export function CourseWorkspace({
           console.log("NOTEBOOK SOURCES ERROR:", sourcesError)
           const uniqueSources = sourcesData
             ? sourcesData.filter((s: any, i: number, arr: any[]) =>
-                arr.findIndex((x: any) => x.file_name === s.file_name) === i)
+                arr.findIndex((x: any) => (x.file_name || x.title) === (s.file_name || s.title)) === i)
             : []
           setNotes(uniqueSources)
         }
@@ -220,7 +220,7 @@ export function CourseWorkspace({
             .eq("course_id", courseId)
           const uniqueSources = sourcesData
             ? sourcesData.filter((s: any, i: number, arr: any[]) =>
-                arr.findIndex((x: any) => x.file_name === s.file_name) === i)
+                arr.findIndex((x: any) => (x.file_name || x.title) === (s.file_name || s.title)) === i)
             : []
           setNotes(uniqueSources)
 
@@ -297,30 +297,45 @@ export function CourseWorkspace({
       } finally {
         setUploading(false)
       }
-    } else if (uploadContent && userId && course) {
+    } else if (uploadContent && userId) {
       setUploading(true)
       try {
-        const { error } = await supabase.from("notes").insert({
-          user_id: userId,
-          course_id: course.id,
-          title: uploadTitle || "Untitled Note",
-          content: uploadContent,
-          subject: course.subject,
+        const fileContent = new Blob([uploadContent], { type: 'text/plain' })
+        const file = new File([fileContent], `${uploadTitle || "Pasted_Note"}.txt`, { type: 'text/plain' })
+        
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("userId", userId)
+        formData.append("courseId", courseId)
+        if (uploadTitle) formData.append("title", uploadTitle)
+        
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
         })
         
-        if (!error) {
+        const data = await response.json()
+        
+        if (data.success) {
           setShowUploadModal(false)
           setUploadTitle("")
           setUploadContent("")
-          const { data: newNotes } = await supabase
-            .from("notes")
+          const { data: refreshed } = await supabase
+            .from("sources")
             .select("*")
             .eq("user_id", userId)
-            .eq("course_id", course.id)
-          setNotes(newNotes || [])
+            .eq("course_id", courseId)
+          const unique = refreshed
+            ? refreshed.filter((s: any, i: number, arr: any[]) =>
+                arr.findIndex((x: any) => (x.file_name || x.title) === (s.file_name || s.title)) === i)
+            : []
+          setNotes(unique)
+        } else {
+          alert(data.error || "Upload failed")
         }
       } catch (err) {
         console.error("Upload error:", err)
+        alert("Upload failed. Please try again.")
       } finally {
         setUploading(false)
       }
@@ -662,7 +677,13 @@ export function CourseWorkspace({
         return
       }
       
-      let finalContent = responseData.response || responseData.answer || "I couldn't process that. Please try again."
+      const rawResponse = responseData.response || responseData.answer || "I couldn't process that. Please try again."
+      let finalContent = rawResponse
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/#{1,6}\s/g, '')
+        .replace(/`/g, '')
+        .trim()
       
       // Simulate notebook context filtering
       if (type === "notebook") {
@@ -769,7 +790,7 @@ export function CourseWorkspace({
               </div>
             ) : notes.length > 0 ? (
               <div className="space-y-1.5">
-                {notes.filter(n => n.file_name && n.file_name.toLowerCase().includes(sourceSearch.toLowerCase())
+                {notes.filter(n => (n.file_name || n.title || "").toLowerCase().includes(sourceSearch.toLowerCase())
                 ).map((note: any) => (
                   <button 
                     key={note.id} 
@@ -784,7 +805,7 @@ export function CourseWorkspace({
                         <FileText className="h-3.5 w-3.5 text-primary" />
                       </div>
                       <span className="font-semibold text-xs truncate group-hover:text-primary transition-colors">
-                        {note.file_name}
+                        {note.file_name || note.title}
                       </span>
                     </div>
                   </button>

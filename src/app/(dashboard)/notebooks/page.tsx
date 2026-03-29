@@ -51,7 +51,7 @@ export default function NotebooksPage() {
       })
       const data = await res.json()
       if (data.success && data.notebookId) {
-        router.push(`/course-workspace/${data.notebookId}`)
+        router.push(`/notebooks/${data.notebookId}`)
       }
     } catch (err) {
       console.error(err)
@@ -101,7 +101,7 @@ export default function NotebooksPage() {
           {notebooks.map((notebook) => (
             <div 
               key={notebook.id} 
-              onClick={() => router.push(`/course-workspace/${notebook.id}`)}
+              onClick={() => router.push(`/notebooks/${notebook.id}`)}
               className="relative h-[180px] rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.03] group border border-border"
             >
               <img 

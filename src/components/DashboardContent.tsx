@@ -14,6 +14,7 @@ interface Course {
   subject: string
   level: string
   total_chapters: number
+  category?: string
 }
 
 interface Progress {
@@ -169,21 +170,36 @@ export function DashboardContent({ user, profile, courses, progress }: Dashboard
         
         <div className="flex gap-4 overflow-x-auto pb-6 pt-2 px-1 custom-scrollbar">
           {/* Create New Notebook Card */}
-          <div className="min-w-[240px] h-[160px] border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.03] shadow-sm hover:shadow-md duration-300">
+          <div 
+            onClick={() => router.push('/notebooks')}
+            className="min-w-[240px] h-[160px] border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.03] shadow-sm hover:shadow-md duration-300"
+          >
             <div className="text-3xl text-muted-foreground mb-2 opacity-60">+</div>
             <p className="text-sm font-semibold text-muted-foreground">Create new notebook</p>
           </div>
 
           {/* Suggested Notebooks */}
-          {courses.map((course) => (
-            <div key={course.id} onClick={() => router.push(`/course-workspace/${course.id}`)} className="relative min-w-[240px] h-[160px] rounded-xl overflow-hidden group cursor-pointer hover:scale-[1.03] transition-all duration-300 shadow-sm hover:shadow-md shrink-0 border border-border">
-              <img src="/assets/hero-study.jpg" alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300" />
-              <div className="absolute bottom-3 left-3 text-white z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                <h3 className="text-md font-semibold tracking-tight">{course.title}</h3>
+          {courses.map((course) => {
+            const colors = ["#ef4444", "#f97316", "#f59e0b", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#ec4899"];
+            const charCode = course.title && course.title.length > 0 ? course.title.charCodeAt(0) : 0;
+            const bgColor = colors[charCode % colors.length];
+            const firstLetter = course.title && course.title.length > 0 ? course.title.charAt(0).toUpperCase() : "U";
+
+            return (
+              <div 
+                key={course.id} 
+                onClick={() => router.push(course.category === 'notebook' ? `/notebooks/${course.id}` : `/course-workspace/${course.id}`)} 
+                className="relative min-w-[240px] h-[160px] rounded-xl overflow-hidden group cursor-pointer hover:scale-[1.03] transition-all duration-300 shadow-sm hover:shadow-md shrink-0 border border-border flex items-center justify-center"
+                style={{ backgroundColor: bgColor }}
+              >
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+                <span className="text-6xl font-bold text-white/40 group-hover:text-white/60 transition-colors drop-shadow-md pb-4">{firstLetter}</span>
+                <div className="absolute bottom-3 left-3 text-white z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  <h3 className="text-md font-semibold tracking-tight">{course.title}</h3>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>

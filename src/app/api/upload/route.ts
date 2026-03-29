@@ -56,14 +56,39 @@ export async function POST(request: Request) {
 
     const filePath = uploadData?.path || null
 
+    // 1. Create source record
+    const { data: sourceRecord, error: sourceError } = await supabase
+      .from("sources")
+      .insert({
+        user_id: userId,
+        course_id: courseId && courseId.includes('-') ? courseId : null,
+        file_name: file.name,
+        file_path: filePath,
+        file_type: fileType,
+        title: title,
+        total_chunks: 0 // Will update later or just leave
+      })
+      .select()
+      .single()
+
+    if (sourceError) {
+      console.error("Source record creation error:", sourceError)
+      // Continue anyway, but source_id will be null
+    }
+
+    const sourceId = sourceRecord?.id || null
+
     const chunks = splitIntoChunks(textContent, 1000)
     const embeddings = await Promise.all(
       chunks.map(chunk => getEmbeddings(chunk).catch(() => null))
     )
+    console.log(`[Upload API] Generated ${embeddings.filter(e => e !== null).length} valid embeddings for ${chunks.length} chunks.`)
 
     const notesToInsert = chunks.map((chunk, index) => ({
       user_id: userId,
       course_id: courseId && courseId.includes('-') ? courseId : null,
+      source_id: sourceId,
+      chunk_index: index,
       title: `${title} (Part ${index + 1})`,
       content: chunk,
       subject: null,
@@ -83,6 +108,14 @@ export async function POST(request: Request) {
           { error: `Failed to save notes: ${insertError.message}` },
           { status: 500 }
         )
+      }
+
+      // Update source with total chunks
+      if (sourceId) {
+        await supabase
+          .from("sources")
+          .update({ total_chunks: chunks.length })
+          .eq("id", sourceId)
       }
     }
 

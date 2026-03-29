@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     // Create the notebook (course) first
     const { data: notebook, error: notebookError } = await supabase
       .from("courses")
-      .insert({ title: notebookName, description: "Personal notebook", subject: "General", created_by: userId, level: "college" })
+      .insert({ title: notebookName, description: "Personal notebook", subject: "General", created_by: userId, level: "college", category: "notebook" })
       .select()
       .single()
 
@@ -111,6 +111,7 @@ export async function POST(request: Request) {
         const embeddings = await Promise.all(
           chunks.map(chunk => getEmbeddings(chunk).catch(() => null))
         )
+        console.log(`[Notebooks API] Generated ${embeddings.filter(e => e !== null).length} valid embeddings for ${chunks.length} chunks.`)
 
         const notesToInsert = chunks.map((chunk, index) => ({ user_id: user.id, course_id: notebook.id, source_id: sourceId, title: index === 0 ? file.name.replace(/\.[^/.]+$/, "") : `${file.name.replace(/\.[^/.]+$/, "")} (Part ${index + 1})`, content: chunk, subject: null, topic: null, embedding: embeddings[index], file_path: filePath, chunk_index: index }))
 

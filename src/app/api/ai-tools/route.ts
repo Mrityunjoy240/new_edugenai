@@ -22,15 +22,11 @@ export async function POST(request: Request) {
         .eq("course_id", courseId)
         .limit(10)
       userNotes = notes || []
+      console.log(`[AI-Tools] Notes found for courseId ${courseId}: ${userNotes.length}`)
     }
 
     if (userNotes.length === 0) {
-      const { data: notes } = await supabase
-        .from("notes")
-        .select("*")
-        .eq("user_id", userId)
-        .limit(10)
-      userNotes = notes || []
+      console.log(`[AI-Tools] No notes found for courseId ${courseId}, falling back to general knowledge.`)
     }
 
     const content = userNotes.map(n => n.content).join("\n\n") || "No content available"

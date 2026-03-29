@@ -30,7 +30,8 @@ export async function POST(request: Request) {
         query_embedding: queryEmbedding,
         match_threshold: 0.5,
         match_count: 5,
-        user_id: userId
+        user_id: userId,
+        course_id: courseId
       })
       if (matchedNotes) contextNotes = matchedNotes
 
