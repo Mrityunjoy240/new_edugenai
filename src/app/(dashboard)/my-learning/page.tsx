@@ -24,7 +24,6 @@ export default async function MyLearningPage() {
   const { data: courses } = await supabase
     .from("courses")
     .select("*")
-    .is("is_published", true)
 
   const subjectColors: Record<string, string> = {
     Physics: "bg-blue-50 text-blue-600",
@@ -62,7 +61,7 @@ export default async function MyLearningPage() {
               const color = subjectColors[course.subject] || "bg-muted text-muted-foreground"
 
               return (
-                <Link key={p.id} href={`/dashboard/workspace/${course.id}`}>
+                <Link key={p.id} href={`/notebooks/${course.id}`}>
                   <Card className="card-hover cursor-pointer">
                     <CardContent className="p-5 flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -127,7 +126,7 @@ export default async function MyLearningPage() {
               const color = subjectColors[course.subject] || "bg-muted text-muted-foreground"
 
               return (
-                <Link key={p.id} href={`/dashboard/workspace/${course.id}`}>
+                <Link key={p.id} href={`/notebooks/${course.id}`}>
                   <Card className="card-hover cursor-pointer opacity-75 hover:opacity-100">
                     <CardContent className="p-5 flex items-center justify-between">
                       <div className="flex items-center gap-4">

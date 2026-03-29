@@ -52,3 +52,25 @@ export async function POST(request: Request) {
     )
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const { userId, courseId, progressPercentage, status } = await request.json()
+    if (!userId || !courseId) {
+      return Response.json({ error: "Missing fields" }, { status: 400 })
+    }
+    const supabase = await createClient()
+    await supabase
+      .from("user_progress")
+      .upsert({
+        user_id: userId,
+        course_id: courseId,
+        progress_percentage: progressPercentage || 10,
+        status: status || "in_progress",
+        last_accessed_at: new Date().toISOString()
+      }, { onConflict: "user_id,course_id" })
+    return Response.json({ success: true })
+  } catch (error: any) {
+    return Response.json({ error: error.message }, { status: 500 })
+  }
+}

@@ -26,8 +26,27 @@ export default function CoursesPage() {
     (course) => course.level === userLevel
   )
 
-  const handleCourseClick = (id: string) => {
-    // TASK 3: Click Navigation (Switch to UUID)
+  const handleCourseClick = async (id: string) => {
+    try {
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        await supabase
+          .from("user_progress")
+          .upsert({
+            user_id: user.id,
+            course_id: id,
+            status: "in_progress",
+            progress_percentage: 10,
+            last_accessed_at: new Date().toISOString(),
+            started_at: new Date().toISOString()
+          }, { onConflict: "user_id,course_id" })
+      }
+    } catch (e) {
+      console.error("Progress update failed:", e)
+    }
     router.push(`/notebooks/${id}`)
   }
 
