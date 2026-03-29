@@ -1,156 +1,224 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import { cn } from "@/lib/utils"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Plus, BookOpen, Trash2 } from "lucide-react"
 
 interface Notebook {
   id: string
   title: string
+  description?: string
   created_at: string
-  created_by: string | null
 }
 
 export default function NotebooksPage() {
   const router = useRouter()
-  const supabase = createClient()
-
   const [notebooks, setNotebooks] = useState<Notebook[]>([])
   const [loading, setLoading] = useState(true)
-  const [creating, setCreating] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [notebookName, setNotebookName] = useState("")
+  const [title, setTitle] = useState("")
+  const [isOpen, setIsOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
 
   useEffect(() => {
-    async function loadNotebooks() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+    fetchNotebooks()
+  }, [])
 
-      const { data } = await supabase
-        .from("courses")
-        .select("id, title, created_at, created_by")
-        .or(`created_by.eq.${user.id},is_published.eq.true`)
-        .eq("category", "notebook")
-        .order("created_at", { ascending: false })
-      
-      if (data) {
-        setNotebooks(data)
-      }
+  const fetchNotebooks = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/notebooks")
+      const data = await res.json()
+      setNotebooks(data.notebooks || [])
+    } catch (error) {
+      console.error("Failed to fetch notebooks:", error)
+    } finally {
       setLoading(false)
     }
-    loadNotebooks()
-  }, [supabase])
+  }
 
-  const handleCreateNew = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-    if (!notebookName.trim()) return
-    
-    setCreating(true)
+  const handleCreateNotebook = async () => {
+    if (!title.trim()) {
+      alert("Please enter a notebook name")
+      return
+    }
+
+    setIsCreating(true)
     try {
-      const formData = new FormData()
-      formData.append("name", notebookName)
       const res = await fetch("/api/notebooks", {
         method: "POST",
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim() })
       })
-      const data = await res.json()
-      if (data.success && data.notebookId) {
-        router.push(`/notebooks/${data.notebookId}`)
+
+      if (res.ok) {
+        const data = await res.json()
+        setTitle("")
+        setIsOpen(false)
+        router.push(`/notebooks/${data.notebook.id}`)
       }
-    } catch (err) {
-      console.error(err)
+    } catch (error) {
+      console.error("Failed to create notebook:", error)
+      alert("Failed to create notebook")
     } finally {
-      setCreating(false)
-      setShowModal(false)
+      setIsCreating(false)
+    }
+  }
+
+  const handleDeleteNotebook = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this notebook?")) return
+
+    try {
+      const res = await fetch(`/api/notebooks/${id}`, {
+        method: "DELETE"
+      })
+
+      if (res.ok) {
+        fetchNotebooks()
+      }
+    } catch (error) {
+      console.error("Failed to delete notebook:", error)
     }
   }
 
   return (
-    <div className="space-y-8 animate-fade-in p-2 md:p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between border-b border-border pb-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Notebooks</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Organize your thoughts, study materials, and AI conversations.</p>
-        </div>
-      </div>
-      
-      {loading ? (
-        <div className="flex justify-center p-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-          {/* Create New Notebook Card */}
-          <div 
-            onClick={!creating ? () => setShowModal(true) : undefined}
-            className={cn(
-              "h-[180px] border-2 border-dashed border-border rounded-xl overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300 relative",
-              creating ? "opacity-50 cursor-default" : "cursor-pointer hover:scale-[1.03] hover:bg-muted/50"
-            )}
-          >
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-              {creating ? (
-                <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Plus className="h-6 w-6 text-primary" />
-                </div>
-              )}
-              <p className="text-base font-semibold text-foreground">
-                {creating ? "Creating..." : "Create new notebook"}
-              </p>
-            </div>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <BookOpen className="h-6 w-6 text-primary" />
           </div>
-          
-          {/* Existing Notebooks */}
-          {notebooks.map((notebook) => (
-            <div 
-              key={notebook.id} 
-              onClick={() => router.push(`/notebooks/${notebook.id}`)}
-              className="relative h-[180px] rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.03] group border border-border"
-            >
-              <img 
-                src="/assets/hero-study.jpg" 
-                alt={notebook.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-              />
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300" />
-              <div className="absolute bottom-4 left-4 text-white z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                <h4 className="font-bold text-xl tracking-tight mb-1">{notebook.title}</h4>
-                <p className="text-xs text-white/70">
-                  {new Date(notebook.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-          ))}
+          <div>
+            <h1 className="text-3xl font-bold">Notebooks</h1>
+            <p className="text-muted-foreground">Organize your thoughts and study materials</p>
+          </div>
         </div>
-      )}
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card w-full max-w-sm rounded-xl shadow-lg border border-border p-6 relative">
-             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
-               <span className="sr-only">Close</span>
-               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-             </button>
-             <h2 className="text-xl font-bold mb-4 text-foreground">Create Notebook</h2>
-             <form onSubmit={handleCreateNew}>
-                <input
-                  type="text"
-                  placeholder="Notebook Name"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mb-4"
-                  value={notebookName}
-                  onChange={(e) => setNotebookName(e.target.value)}
-                  autoFocus
-                />
-                <button type="submit" disabled={creating || !notebookName.trim()} className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full">
-                  {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {creating ? "Creating..." : "Create Notebook"}
-                </button>
-             </form>
-          </div>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Notebook
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Notebook</DialogTitle>
+              <DialogDescription>
+                Give your notebook a name to get started
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="Notebook name..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreateNotebook()
+                }}
+              />
+              <Button
+                onClick={handleCreateNotebook}
+                disabled={isCreating || !title.trim()}
+                className="w-full"
+              >
+                {isCreating ? "Creating..." : "Create Notebook"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Notebooks Grid */}
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <p className="text-muted-foreground">Loading notebooks...</p>
+        </div>
+      ) : notebooks.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground text-center mb-4">
+              No notebooks yet. Create one to get started!
+            </p>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create Notebook
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Notebook</DialogTitle>
+                  <DialogDescription>
+                    Give your notebook a name to get started
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Notebook name..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreateNotebook()
+                    }}
+                  />
+                  <Button
+                    onClick={handleCreateNotebook}
+                    disabled={isCreating || !title.trim()}
+                    className="w-full"
+                  >
+                    {isCreating ? "Creating..." : "Create Notebook"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {notebooks.map((notebook) => (
+            <Card
+              key={notebook.id}
+              className="hover:shadow-lg transition-shadow cursor-pointer group"
+              onClick={() => router.push(`/notebooks/${notebook.id}`)}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <BookOpen className="h-8 w-8 text-primary" />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteNotebook(notebook.id)
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+                <h3 className="font-semibold text-lg mb-1 line-clamp-2">
+                  {notebook.title}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Created {new Date(notebook.created_at).toLocaleDateString()}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>

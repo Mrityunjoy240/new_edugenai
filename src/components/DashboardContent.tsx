@@ -3,10 +3,20 @@
 import { Play, ArrowRight, BookOpen, Clock, Award, TrendingUp, Sparkles, Plus } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 interface Course {
   id: string
@@ -170,14 +180,21 @@ export function DashboardContent({ user, profile, courses, progress }: Dashboard
         </div>
         
         <div className="flex gap-4 overflow-x-auto pb-6 pt-2 px-1 custom-scrollbar">
-          {/* Create New Notebook Card */}
-          <div 
-            onClick={() => router.push('/notebooks')}
-            className="min-w-[240px] h-[160px] border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.03] shadow-sm hover:shadow-md duration-300"
-          >
-            <div className="text-3xl text-muted-foreground mb-2 opacity-60">+</div>
-            <p className="text-sm font-semibold text-muted-foreground">Create new notebook</p>
-          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="min-w-[240px] h-[160px] border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors shadow-sm hover:shadow-md">
+                <Plus className="h-12 w-12 text-primary mb-2" />
+                <p className="text-sm font-medium">Create new notebook</p>
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Notebook</DialogTitle>
+                <DialogDescription>Give your notebook a name to get started</DialogDescription>
+              </DialogHeader>
+              <CreateNotebookForm onSuccess={() => window.location.reload()} />
+            </DialogContent>
+          </Dialog>
 
           {/* Suggested Notebooks */}
           {courses.map((course) => {
@@ -224,6 +241,46 @@ export function DashboardContent({ user, profile, courses, progress }: Dashboard
           })}
         </div>
       </div>
+    </div>
+  )
+}
+
+function CreateNotebookForm({ onSuccess }: { onSuccess: () => void }) {
+  const [title, setTitle] = useState("")
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+
+  const handleCreate = async () => {
+    if (!title.trim()) return
+    setLoading(true)
+    try {
+      const res = await fetch("/api/notebooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim() })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        router.push(`/notebooks/${data.notebook.id}`)
+      }
+    } catch (error) {
+      console.error("Failed to create notebook:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Input
+        placeholder="Notebook name..."
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+      />
+      <Button onClick={handleCreate} disabled={loading || !title.trim()} className="w-full">
+        {loading ? "Creating..." : "Create Notebook"}
+      </Button>
     </div>
   )
 }
