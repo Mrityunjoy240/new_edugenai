@@ -26,10 +26,12 @@ export async function POST(request: Request) {
     }
 
     if (userNotes.length === 0) {
-      return Response.json({ 
-        success: false, 
-        error: "No content found. Please upload a PDF to this notebook first." 
-      }, { status: 404 })
+      return Response.json({
+        success: true,
+        type,
+        result: "No PDF content found for this notebook. Please upload a PDF first, then use this tool to generate content from your document.",
+        sourcesCount: 0
+      })
     }
 
     const content = userNotes.map(n => n.content).join("\n\n") || "No content available"

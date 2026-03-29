@@ -683,6 +683,8 @@ export function CourseWorkspace({
         .replace(/\*/g, '')
         .replace(/#{1,6}\s/g, '')
         .replace(/`/g, '')
+        .replace(/^\[AI Context\][^\:]*\:\s*/i, '')
+        .replace(/^\[Notebook:[^\]]*\]\s*/i, '')
         .trim()
       
       // Simulate notebook context filtering
