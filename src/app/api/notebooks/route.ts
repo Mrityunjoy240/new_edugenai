@@ -44,8 +44,10 @@ export async function POST(request: Request) {
       return Response.json({ error: "Notebook name required" }, { status: 400 })
     }
 
+    const supabaseAuth = await createClient()
+    const { data: { user } } = await supabaseAuth.auth.getUser()
+
     const supabase = await createServiceClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       return Response.json({ error: "Not authenticated" }, { status: 401 })
