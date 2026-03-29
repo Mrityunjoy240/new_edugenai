@@ -414,24 +414,50 @@ export function CourseWorkspace({
         const rawResult = data.result || data.response || data.data
         if (rawResult) {
           if (toolType === "notes") {
-            const shortNotes = formatNotesShort(rawResult)
+            const cleanResult = rawResult
+              .replace(/\*\*/g, '')
+              .replace(/\*/g, '')
+              .replace(/#{1,6}\s/g, '')
+              .replace(/`/g, '')
+              .trim()
             const assistantMessage: ChatMessage = {
               id: Date.now().toString(),
               role: "assistant",
-              content: `📝 Smart Notes\n\n${shortNotes}`,
+              content: `📝 Smart Notes\n\n${cleanResult}`,
             }
             setMessages(prev => [...prev, assistantMessage])
           } else if (toolType === "quiz") {
-            const parsed = parseQuiz(rawResult)
-            setQuizQuestions(parsed)
-            setSmartToolResult("Quiz loaded - click an answer")
+            try {
+              const cleaned = rawResult.replace(/```json/g, '').replace(/```/g, '').trim()
+              const parsed = JSON.parse(cleaned)
+              setQuizQuestions(Array.isArray(parsed) ? parsed : [])
+              setSmartToolResult("Quiz loaded - click an answer")
+            } catch {
+              setQuizQuestions([])
+              console.error("Quiz parse error:", rawResult)
+            }
           } else if (toolType === "flashcards") {
-            const parsed = parseFlashcards(rawResult)
-            setFlashcards(parsed)
-            setSmartToolResult("Flashcards loaded - click to flip")
+            try {
+              const cleaned = rawResult.replace(/```json/g, '').replace(/```/g, '').trim()
+              const parsed = JSON.parse(cleaned)
+              setFlashcards(Array.isArray(parsed) ? parsed : [])
+              setSmartToolResult("Flashcards loaded - click to flip")
+            } catch {
+              setFlashcards([])
+              console.error("Flashcards parse error:", rawResult)
+            }
           } else if (toolType === "topics") {
-            const topicsText = parseTopics(rawResult)
-            setSmartToolResult(topicsText)
+            try {
+              const cleaned = rawResult.replace(/```json/g, '').replace(/```/g, '').trim()
+              const parsed = JSON.parse(cleaned)
+              const topicsText = Array.isArray(parsed) 
+                ? parsed.map((t: any) => `• ${t.topic || t.name || t}`).join("\n")
+                : rawResult
+              setSmartToolResult(topicsText)
+            } catch {
+              setSmartToolResult(rawResult)
+              console.error("Topics parse error:", rawResult)
+            }
           } else if (toolType === "assignment") {
             const assignText = parseAssignment(rawResult)
             setSmartToolResult(assignText)

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         .select("*")
         .eq("user_id", userId)
         .eq("course_id", courseId)
-        .limit(10)
+        .limit(5)
       userNotes = notes || []
       console.log(`[AI-Tools] Notes found for courseId ${courseId}: ${userNotes.length}`)
     }
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       })
     }
 
-    const content = userNotes.map(n => n.content).join("\n\n") || "No content available"
+    const content = userNotes.map(n => n.content).join("\n\n").substring(0, 8000) || "No content available"
 
     let systemPrompt = ""
 

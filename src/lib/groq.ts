@@ -1,6 +1,9 @@
 export async function chatCompletion(messages: any[], model?: string, maxTokens?: number): Promise<string> {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 60000)
+
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -14,7 +17,9 @@ export async function chatCompletion(messages: any[], model?: string, maxTokens?
           max_tokens: maxTokens || 1000,
           messages,
         }),
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
