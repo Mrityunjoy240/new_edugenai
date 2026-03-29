@@ -92,7 +92,11 @@ export default function TeacherPage() {
       if (res.ok) {
         const data = await res.json()
         if (data.upvoted) {
-          setUserUpvotes((prev) => new Set([...prev, postId]))
+          setUserUpvotes((prev) => {
+            const next = new Set(prev)
+            next.add(postId)
+            return next
+          })
         } else {
           setUserUpvotes((prev) => {
             const next = new Set(prev)
