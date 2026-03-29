@@ -12,17 +12,13 @@ export default function CoursesPage() {
 
   // TASK 6: COURSE DATA STRUCTURE (EXPANDED)
   const allCourses = [
-    { title: "AI Basics", level: "school", image: "/assets/course-coding.jpg" },
-    { title: "Python", level: "school", image: "/assets/course-marketing.jpg" },
-    { title: "Math Fundamentals", level: "school", image: "/assets/hero-study.jpg" },
+    { id: "11111111-1111-1111-1111-111111111111", title: "Introduction to AI", level: "college", image: "/assets/course-coding.jpg" },
+    { id: "22222222-2222-2222-2222-222222222222", title: "Python Programming", level: "college", image: "/assets/course-marketing.jpg" },
+    { id: "33333333-3333-3333-3333-333333333333", title: "Data Structures & Algorithms", level: "college", image: "/assets/hero-study.jpg" },
     
-    { title: "DSA", level: "college", image: "/assets/course-data.jpg" },
-    { title: "Operating Systems", level: "college", image: "/assets/course-design.jpg" },
-    { title: "DBMS", level: "college", image: "/assets/course-coding.jpg" },
-    
-    { title: "Data Analyst", level: "professional", image: "/assets/course-data.jpg" },
-    { title: "Machine Learning", level: "professional", image: "/assets/hero-study.jpg" },
-    { title: "Startup Building", level: "professional", image: "/assets/course-design.jpg" }
+    { id: "44444444-4444-4444-4444-444444444444", title: "Advanced DSA", level: "college", image: "/assets/course-data.jpg" },
+    { id: "55555555-5555-5555-5555-555555555555", title: "Operating Systems", level: "college", image: "/assets/course-design.jpg" },
+    { id: "66666666-6666-6666-6666-666666666666", title: "DBMS", level: "college", image: "/assets/course-coding.jpg" },
   ]
 
   // TASK 7: FILTER LOGIC
@@ -30,10 +26,9 @@ export default function CoursesPage() {
     (course) => course.level === userLevel
   )
 
-  const handleCourseClick = (title: string) => {
-    // TASK 3: Click Navigation
-    const slug = title.toLowerCase().replace(/\s+/g, "-")
-    router.push(`/notebooks/${slug}`)
+  const handleCourseClick = (id: string) => {
+    // TASK 3: Click Navigation (Switch to UUID)
+    router.push(`/notebooks/${id}`)
   }
 
   return (
@@ -48,7 +43,7 @@ export default function CoursesPage() {
           {allCourses.slice(0, 6).map((course, idx) => (
             <div 
               key={idx}
-              onClick={() => handleCourseClick(course.title)}
+              onClick={() => handleCourseClick(course.id)}
               className="relative min-w-[260px] h-[180px] rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.03] shrink-0"
             >
               <img 
@@ -78,7 +73,7 @@ export default function CoursesPage() {
             {filteredCourses.map((course, idx) => (
               <div 
                 key={idx}
-                onClick={() => handleCourseClick(course.title)}
+                onClick={() => handleCourseClick(course.id)}
                 className="relative h-[180px] rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.03]"
               >
                 <img 
