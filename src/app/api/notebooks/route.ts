@@ -45,8 +45,6 @@ export async function POST(req: NextRequest) {
       .from("courses")
       .insert({
         title: title.trim(),
-        subject: "General",
-        level: "college", // Fix "courses_level_check" violation
         created_by: user.id,
         is_published: false
       })
