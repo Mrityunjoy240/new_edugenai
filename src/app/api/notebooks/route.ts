@@ -46,7 +46,10 @@ export async function POST(req: NextRequest) {
       .insert({
         title: title.trim(),
         created_by: user.id,
-        is_published: false
+        is_published: false,
+        subject: "General",
+        level: "high_school",
+        category: "notebook"
       })
       .select()
       .single()
