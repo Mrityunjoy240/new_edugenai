@@ -36,8 +36,9 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') ||
                      request.nextUrl.pathname.startsWith('/register')
   const isPublicPage = request.nextUrl.pathname === '/'
-  
-  if (!user && !isAuthPage && !isPublicPage) {
+  const isCallback = request.nextUrl.pathname.startsWith('/auth/callback')
+
+  if (!user && !isAuthPage && !isPublicPage && !isCallback) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
